@@ -130,14 +130,14 @@
                     d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
             </svg>
             <h2 class="ms-3 text-xl font-semibold text-gray-900 dark:text-white">
-                <a href="https://laracasts.com">Audit Log</a>
+                <a href="{{ config('app.url') }}/docs/api">Scramble doc</a>
             </h2>
         </div>
 
         <p class="mt-4 text-sm">
-            <a href="https://laracasts.com"
+            <a href="{{ config('app.url') }}/docs/api"
                 class="inline-flex items-center font-semibold text-indigo-700 dark:text-indigo-300">
-                Comming Soon
+                Open Scramble doc
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
                     class="ms-1 size-5 fill-indigo-500 dark:fill-indigo-200">
                     <path fill-rule="evenodd"
@@ -155,14 +155,14 @@
                     d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
             </svg>
             <h2 class="ms-3 text-xl font-semibold text-gray-900 dark:text-white">
-                <a href="https://laracasts.com">Atrisan Console</a>
+                <a href="https://laracasts.com">Auditable Console</a>
             </h2>
         </div>
 
         <p class="mt-4 text-sm">
-            <a href="https://laracasts.com"
+            <a href="{{ route('audit') }}"
                 class="inline-flex items-center font-semibold text-indigo-700 dark:text-indigo-300">
-                Comming Soon
+                Auditable
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
                     class="ms-1 size-5 fill-indigo-500 dark:fill-indigo-200">
                     <path fill-rule="evenodd"

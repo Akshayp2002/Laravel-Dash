@@ -4,8 +4,19 @@ namespace {{ namespace }};
 
 {{ factoryImport }}
 use Illuminate\Database\Eloquent\Model;
+use Kirschbaum\PowerJoins\PowerJoins;
+use OwenIt\Auditing\Contracts\Auditable;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 
-class {{ class }} extends Model
+class {{ class }} extends Model implements Auditable
 {
+    use PowerJoins, HasUlids;
+    use \OwenIt\Auditing\Auditable;
     {{ factory }}
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [];
 }

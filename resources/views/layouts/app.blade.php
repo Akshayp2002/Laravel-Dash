@@ -13,7 +13,7 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
-
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
         <!-- Styles -->
         @livewireStyles
     </head>
@@ -40,6 +40,10 @@
 
         @stack('modals')
 
+
         @livewireScripts
+
+        {{-- Scripts --}}
+        @stack('scripts')   
     </body>
 </html>

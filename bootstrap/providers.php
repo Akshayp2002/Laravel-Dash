@@ -7,4 +7,6 @@ return [
     App\Providers\JetstreamServiceProvider::class,
     App\Providers\TelescopeServiceProvider::class,
     OwenIt\Auditing\AuditingServiceProvider::class,
+    Yajra\DataTables\DataTablesServiceProvider::class,
+    Yajra\DataTables\FractalServiceProvider::class,
 ];

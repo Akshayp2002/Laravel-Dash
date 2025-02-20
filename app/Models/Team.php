@@ -8,10 +8,12 @@ use Laravel\Jetstream\Events\TeamDeleted;
 use Laravel\Jetstream\Events\TeamUpdated;
 use Laravel\Jetstream\Team as JetstreamTeam;
 use OwenIt\Auditing\Contracts\Auditable;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
+
 class Team extends JetstreamTeam implements Auditable
 {
     /** @use HasFactory<\Database\Factories\TeamFactory> */
-    use HasFactory;
+    use HasFactory, HasUlids;
     use \OwenIt\Auditing\Auditable;
 
     /**
