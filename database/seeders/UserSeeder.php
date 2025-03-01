@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
@@ -14,22 +13,38 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory(10)->withPersonalTeam()->create();
+        if (!User::where('email', 'administrator@rugr.com')->exists()) {
+            User::factory()->withPersonalTeam()->create([
+                'name'     => 'Administrator',
+                'email'    => 'administrator@rugr.com',
+                'password' => Hash::make('Admin@123'),
+            ]);
+        }
+        if (!User::where('email', 'guest@rugr.com')->exists()) {
+            User::factory()->withPersonalTeam()->create([
+                'name'     => 'Guest',
+                'email'    => 'guest@rugr.com',
+                'password' => Hash::make('Guest@123'),
+            ]);
+        }
 
-        // Check if 'Developer' user exists before creating it
-        if (!User::where('email', 'developer@yopmail.com')->exists()) {
+        if (!User::where('email', 'developer@rugr.com')->exists()) {
             User::factory()->withPersonalTeam()->create([
                 'name'     => 'Developer',
-                'email'    => 'developer@yopmail.com',
-                'password' => Hash::make('password'),   // Default password
+                'email'    => 'developer@rugr.com',
+                'password' => Hash::make('Dev@123'),
             ]);
         }
-        if (!User::where('email', 'user@yopmail.com')->exists()) {
+        if (!User::where('email', 'user@rugr.com')->exists()) {
             User::factory()->withPersonalTeam()->create([
                 'name'     => 'User',
-                'email'    => 'user@yopmail.com',
-                'password' => Hash::make('password'),   // Default password
+                'email'    => 'user@rugr.com',
+                'password' => Hash::make('User@123'),
             ]);
         }
+
+        // Test Users
+        User::factory(10)->withPersonalTeam()->create();
+
     }
 }

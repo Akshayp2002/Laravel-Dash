@@ -22,10 +22,8 @@ class EmailHelper
                 $message->to($to)
                     ->subject($subject);
             });
-
             return true; // Email sent successfully
         } catch (\Exception $e) {
-            dd($e);
             return false; // Failed to send email
         }
     }
@@ -36,9 +34,9 @@ class EmailHelper
             Mail::raw($message, function ($mail) use ($to, $subject) {
                 $mail->to($to)->subject($subject);
             });
-            return true;
+            return true;  // Email sent successfully
         } catch (\Exception $e) {
-            return false;
+            return false; // Failed to send email
         }
     }
 

@@ -8,51 +8,143 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Helpers\OtpHelper;
-use App\Helpers\EmailHelper;
+use App\Helpers\RateLimiterHelper;
+use App\Mail\OtpLogin;
+use App\Models\Otp;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Mail;
 
 class LoginController extends Controller
 {
     public function login(Request $request)
     {
-
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
+            'email'    => 'required|email',
             'password' => 'required',
             'remember' => 'in:true,false',
         ]);
         if ($validator->fails()) {
-            return response()->json(
-                [
-                    'data' => [],
-                    'message' => $validator->errors()
-                ]
-            );
+            return response()->json(['message' => $validator->errors()], 400);
         }
-        $credentials = [
-            'email' => $request->email,
-            'password' => $request->password
-        ];
-        $remember = $request->has('remember') ? $request->remember : false;
-        if (Auth::attempt($credentials, $remember)) {
+        // Rate Limiting for 5 request in a minute
+        if ($response = RateLimiterHelper::checkLoginRateLimit($request->email)) return $response;
+
+        if (Auth::attempt($request->only('email', 'password'), $request->remember ?? false)) {
+            $user = Auth::user();
+
+            // if email is not verified
+            if (!$user->email_verified_at) {
+                return response()->json(['message' => 'Please verify your email to login!'], 400);
+            }
+
+            // Check if Two-Factor Authentication (2FA) is enabled
+            if ($user->twoFactorStatus && $user->twoFactorStatus->two_factor_all_status) {
+                $twoFactor = $user->twoFactorStatus;
+
+                // Collect enabled 2FA methods
+                $enabledMethods = [];
+
+                if ($twoFactor->qr_code_status) {
+                    $enabledMethods[] = 'qr';
+                }
+                if ($twoFactor->email_otp_status) {
+                    $enabledMethods[] = 'email';
+                }
+
+                // If no specific 2FA method is enabled, proceed with normal login
+                if (empty($enabledMethods)) {
+                    goto normalLogin;
+                }
+
+                // for single mfa enabled
+                if($twoFactor->qr_code_status && !$twoFactor->email_otp_status){
+                    $result = OtpHelper::generateToken($user->id);
+                    return response()->json([
+                        'message'             => 'Two-Factor Authentication required!',
+                        'two_fa_enabled'      => true,
+                        'mfa_token' => $result['token'],
+                    ], 200);
+                }
+
+                if (!$twoFactor->qr_code_status && $twoFactor->email_otp_status) {
+                    $otp = OtpHelper::generateOtp($user->id);
+                    $emailSent = Mail::to($user->email)->send(new OtpLogin($otp));
+                    if ($emailSent) {
+                        return response()->json([
+                            'message'        => 'OTP sent successfully.',
+                            'two_fa_enabled' => true,
+                            'user_token'     => $otp['user_token']
+                        ],      200);
+                    } else {
+                        return response()->json(['message' => 'Failed to send OTP try again latter.'], 400);
+                    }
+                }
+
+                // Determine response message
+                $message = count($enabledMethods) > 1
+                    ? 'Multiple authentication methods available!'
+                    : ucfirst($enabledMethods[0]) . ' Authentication required!';
+
+                $result = OtpHelper::generateToken($user->id);
+                return response()->json([
+                    'message'        => $message,
+                    'two_fa_enabled' => true,
+                    'mfa_token'      => $result['token'],
+                    'method'         => $enabledMethods,
+                ], 200);
+            }
+
+            normalLogin:
+            // Proceed with normal authentication if 2FA is not enabled
             $deviceName = $request->userAgent();
-            $user             = Auth::user();
             $data['name']     = $user->name;
             $data['token']    = $user->createToken($deviceName)->accessToken;
             $data['email']    = $user->email;
-            $data['remember'] = $request->remember;
 
-            return response()->json([
-                'data' => $data,
-                'message' => "Logged in!"
-            ]);
+            return response()->json(['data' => $data, 'message' => 'Logged in successfully!'], 200);
         } else {
-            return response()->json([
-                'data' => [],
-                'message' => "invalid Credentials!"
-            ]);
+            return response()->json(['message' => 'Invalid Credentials!'], 400);
         }
     }
 
+    //multiple mfa verify
+    public function selectMultiMfa($token , $method){
+
+        $multitoken = Otp::where('otp', $token)->first();
+        if(!$multitoken){
+            return response()->json([
+                'message'        => 'Unable to authenticate.!',
+            ], 400);
+        }
+        if($method == "qr"){
+            if($multitoken){
+                $result = OtpHelper::generateToken($multitoken->user_id);
+                $multitoken->delete();
+                return response()->json([
+                    'message'        => 'Verify using authenticator app.!',
+                    'two_fa_enabled' => true,
+                    'mfa_token'     => $result['token'],
+                ], 200);
+            }
+        }elseif($method == "email"){
+            if ($multitoken) {
+                $otp = OtpHelper::generateOtp($multitoken->user_id);
+                $user = User::where('id', $multitoken->user_id)->first();
+                $emailSent = Mail::to($user->email)->send(new OtpLogin($otp));
+                $multitoken->delete();
+                if ($emailSent) {
+                    return response()->json([
+                        'message'        => 'OTP sent successfully.',
+                        'two_fa_enabled' => true,
+                        'user_token'     => $otp['user_token']],      200);
+                } else {
+                    return response()->json(['message' => 'Failed to send OTP try again latter.'], 400);
+                }
+            }
+        }
+    }
+
+    // OTP Login
     public function otpLogin(Request $request)
     {
         // Validate the request
@@ -62,28 +154,21 @@ class LoginController extends Controller
         // Retrieve the user for the email content
         $user = User::where('email', $request->email)->first();
 
+        if (!$user->email_verified_at) {
+            return response()->json(['message' => 'Please verify your email to login!'], 400);
+        }
         // Generate OTP using the helper
         $result = OtpHelper::generateOtp($user->id);
-
-        // Prepare the data for the email
-        $subject = "Your OTP Code for Password Reset";
-        $view    = 'emails.Api.Auth.otpLogin';
-
-        // Retrieve the user for the email content (optional)
-        $data = [
-            'otp'        => $result['otp'],
-            'expires_at' => now()->addMinutes(5)->format('Y-m-d H:i:s'),
-        ];
-
-        // Send the OTP using the helper
-        $emailSent = EmailHelper::sendEmail($user->email, $subject, $view, $data);
+        // Send the OTP using the mail
+        $emailSent = Mail::to($user->email)->send(new OtpLogin($result));
         if ($emailSent) {
             return response()->json(['message' => 'OTP sent successfully.', 'user_token' => $result['user_token']], 200);
         } else {
-            return response()->json(['message' => 'Failed to send OTP.'], 400);
+            return response()->json(['message' => 'Failed to send OTP try again latter.'], 400);
         }
     }
 
+    // Verify OTP for OTP login
     public function verifyuserOtp(Request $request)
     {
         // Validate the request
@@ -94,38 +179,39 @@ class LoginController extends Controller
         $isValid = OtpHelper::verifyOtpUser($request->user_token, $request->otp);
 
         if ($isValid) {
-            // Retrieve the most recent OTP record associated with user_token
-            // $veriryUser = Otp::where('id', $request->user_token)->latest()->first();
-            // Check if OTP record exists and is valid
             $user = User::where('id', $isValid)->first();
+            // if email is not verified
             if (!$user) {
-                return response()->json(['message' => 'User not found.'], 404);
+                return response()->json(['message' => 'User not found.'], 400);
             }
+            $deviceName = $request->userAgent();
             $data['name']     = $user->name;
-            $data['token']    = $user->createToken('MyApp')->accessToken;
+            $data['token']    = $user->createToken($deviceName)->accessToken;
             $data['email']    = $user->email;
-            $data['remember'] = $request->remember;
 
             return response()->json([
-                'data' => $data,
-                'message' => "Logged in!"
-            ]);
+                'data'    => $data,
+                'message' => "Logged in successfully!"
+            ], 200);
         } else {
             return response()->json(['message' => 'Invalid or expired OTP.'], 400);
         }
     }
 
-    public function logout(Request $request){
-
-        $user = auth()->user();
+    // Logout
+    public function logout(Request $request)
+    {
+        $user = Auth::user();
         $currentToken = $request->user()->token();
         if ($currentToken) {
             $currentTokenId = $currentToken->id;
-            $user->tokens()->where('id',$currentTokenId)->delete();
+            $user->tokens()->where('id', $currentTokenId)->delete();
+            return response()->json([
+                'data'    => $user,
+                'message' => 'user Logged out successfully!'
+            ], 200);
+        } else {
+            return response()->json(['message' => 'User not found!'], 400);
         }
-        return response()->json([
-            'data' => $user,
-            'message' => 'user Logged out successfully.'
-        ]);
     }
 }

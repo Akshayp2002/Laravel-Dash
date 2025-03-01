@@ -26,81 +26,39 @@ class CreateTableClass extends Command
      */
     public function handle()
     {
-        $tableClassName = $this->argument('name'); // Get the table class name from the command argument
+        $className = $this->argument('name');
+        $path = app_path('Table/' . $className . '.php');
 
-        // Define the path to save the new file
-        $path = app_path('Table/' . $tableClassName . '.php');
-
-        // Check if the file already exists
         if (File::exists($path)) {
-            $this->error("The table class $tableClassName already exists.");
+            $this->error("The table class $className already exists.");
             return;
         }
 
-        // Generate the table class file
-        $this->createTableClassFile($tableClassName);
-
-        $this->info("Table class $tableClassName created successfully.");
+        $this->createClassFile($className);
+        $this->info("Table class $className created successfully.");
     }
 
 
-    // Method to create the table class file
-    protected function createTableClassFile($tableClassName)
+    protected function createClassFile($className)
     {
-        // Define the stub content for the table class
-        $stub = "<?php
+        // Define stub path
+        $stubPath = base_path('stubs/yaska-table.stub');
 
-namespace App\Table;
+        // Read the stub file
+        if (!File::exists($stubPath)) {
+            throw new \Exception("Stub file not found at: " . $stubPath);
+        }
 
-use App\YaskaTable\Yaska;
-use App\Models\User;
+        $stub = File::get($stubPath);
 
-class $tableClassName extends Yaska
-{
-    protected \$arguments;
+        // Replace placeholder with actual class name
+        $stub = str_replace('{{className}}', $className, $stub);
 
-    public function __construct(...\$arguments)
-    {
-        \$this->arguments = \$arguments;
-        parent::__construct();
-    }
+        // Ensure Table directory exists
+        File::ensureDirectoryExists(app_path('Table'));
 
-     /**
-     * Must define the model query.
-     * 
-     * ⚡ To achieve the full potential of this DataTable with Eloquent relationships, 
-     * consider using optimized joins instead of multiple queries.
-     * 
-     * 🚀 Recommended: Use 'Power Joins' for better performance and easier relationship handling.
-     * 📖 Reference: https://kirschbaumdevelopment.com/insights/power-joins
-     */
-
-    protected function setModel()
-    {
-        return User::query();
-    }
-
-    // Define which columns should be searchable in the DataTable.
-    protected \$searchableColumns = [
-
-    ];
-
-    // Define columns that should be excluded from searches.
-    // These columns will not be included in the filtering process.
-    protected \$excludedColumns = [
-        'id',
-    ];
-
-
-
-
-}
-
-                    ";
-
-        // Save the generated file to the app/Table directory
-        File::ensureDirectoryExists(app_path('Table')); // Ensure the Table directory exists
-        File::put(app_path('Table/' . $tableClassName . '.php'), $stub);
+        // Save the generated file
+        File::put(app_path("Table/{$className}.php"), $stub);
     }
 
 

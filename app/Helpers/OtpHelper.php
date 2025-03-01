@@ -4,6 +4,7 @@ namespace App\Helpers;
 
 use App\Models\Otp;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class OtpHelper
 {
@@ -78,5 +79,31 @@ class OtpHelper
             return $otpuser;
         }
         return false;
+    }
+
+    /**
+     * Generate a ULID and save it in the OTP and save it to the database.
+     *
+     * @param int $userId
+     * @return string $token
+     */
+
+    public static function generateToken($userId)
+    {
+        // Generate a token
+        $token = Str::random(64);
+
+        // Save ULID to the database with an expiration time (e.g., 5 minutes)
+        $tokenRecord = Otp::create([
+            'user_id'    => $userId,
+            'otp'        => $token,  // Store the ULID instead of a numeric OTP
+            'expires_at' => Carbon::now()->addHours(24), // Set expiry to 24 hours
+        ]);
+
+        // Return both the ID of the record and the ULID
+        return [
+            'user_token' => $tokenRecord->id, // The ID of the record
+            'token'      => $token,           // The generated ULID
+        ];
     }
 }

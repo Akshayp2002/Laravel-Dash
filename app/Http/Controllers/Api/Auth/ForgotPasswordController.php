@@ -5,11 +5,14 @@ namespace App\Http\Controllers\Api\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Helpers\OtpHelper;
-use App\Helpers\EmailHelper;
+use App\Helpers\RateLimiterHelper;
+use App\Mail\ForgotPasswordOtp;
 use App\Models\Otp;
 use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ResetPassword;
 
 class ForgotPasswordController extends Controller
 {
@@ -20,24 +23,17 @@ class ForgotPasswordController extends Controller
         $request->validate([
             'email' => 'required|email|exists:users,email', // Ensure email exists in the users table
         ]);
-        // Retrieve the user for the email content 
+        // Retrieve the user for the email content
         $user = User::where('email', $request->email)->first();
+        // Rate Limiting for 5 request in a minute
+        if ($response = RateLimiterHelper::checkLoginRateLimit($request->email)) return $response;
 
         // Generate OTP using the helper
         $result = OtpHelper::generateOtp($user->id);
+        // Send the OTP using the email
+        $emailSent = Mail::to($user->email)->send(new ForgotPasswordOtp($result));
 
-        // Prepare the data for the email
-        $subject = "Your OTP Code for Password Reset";
-        $view    = 'emails.Api.Auth.forgotPasswordOtp';
-
-        // Retrieve the user for the email content (optional)
-        $data = [
-            'otp'        => $result['otp'],
-            'expires_at' => now()->addMinutes(5)->format('Y-m-d H:i:s'),
-        ];
-
-        // Send the OTP using the helper
-        $emailSent = EmailHelper::sendEmail($user->email, $subject, $view, $data);
+        // $emailSent = EmailHelper::sendEmail($user->email, $subject, $view, $data);
         if ($emailSent) {
             return response()->json(['message' => 'OTP sent successfully.', 'user_token' => $result['user_token']], 200);
         } else {
@@ -79,7 +75,7 @@ class ForgotPasswordController extends Controller
         $user = User::where('id', $veriryUser->user_id)->first();
 
         if (!$user) {
-            return response()->json(['message' => 'User not found.'], 404);
+            return response()->json(['message' => 'User not found.'], 400);
         }
 
         // Reset the password
@@ -89,5 +85,20 @@ class ForgotPasswordController extends Controller
         $veriryUser->delete();
 
         return response()->json(['message' => 'Password reset successfully.'], 200);
+    }
+
+    // user reset password
+    public function passwordReset()
+    {
+        $user = auth()->user();
+        // Generate token using the helper
+        $result = OtpHelper::generateOtp($user->id);
+        $resetUrl = env('CLIENT_URL') . '?verification-success';
+        // Send the OTP using the email
+        Mail::to($user->email)->send(new ResetPassword($resetUrl));
+        return response()->json([
+            'user_token' => $result['user_token'],
+            'message' => "Reset link sent successfully, Reset your password"
+        ], 200);
     }
 }

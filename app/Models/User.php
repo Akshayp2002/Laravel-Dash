@@ -14,6 +14,7 @@ use Laravel\Passport\HasApiTokens;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 // use Laravel\Jetstream\HasProfilePhoto;
 use App\Traits\HasProfilePhoto;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class User extends Authenticatable  implements Auditable
 {
@@ -72,4 +73,15 @@ class User extends Authenticatable  implements Auditable
             'password'          => 'hashed',
         ];
     }
+public function twoFactorStatus()
+{
+    return $this->hasOne(TwoFactorStatus::class, 'user_id');
+}
+
+// Check if the user has enabled Two-Factor Authentication
+public function isTwoFactorEnabled()
+{
+    return $this->twoFactorStatus && $this->twoFactorStatus->two_factor_all_status;
+}
+
 }

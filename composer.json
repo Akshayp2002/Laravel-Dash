@@ -27,6 +27,7 @@
         "opcodesio/log-viewer": "^3.14",
         "owen-it/laravel-auditing": "^13.6",
         "spatie/laravel-permission": "^6.14",
+        "stancl/tenancy": "^3.8",
         "yajra/laravel-datatables-fractal": "^11.0",
         "yajra/laravel-datatables-oracle": "^11.0"
     },
@@ -49,7 +50,8 @@
         "files": [
                 "app/Helpers/EmailHelper.php",
                 "app/Helpers/OtpHelper.php",
-                "app/Helpers/FileUploadHelper.php"
+                "app/Helpers/FileUploadHelper.php",
+                "app/Helpers/RateLimiterHelper.php"
             ]
     },
     "autoload-dev": {

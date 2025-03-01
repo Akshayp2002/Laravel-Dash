@@ -6,6 +6,8 @@ use App\Http\Controllers\Developer\UserController;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 use Yajra\DataTables\DataTables;
+
+
 Route::get('/', function () {
     return to_route('login');
 });

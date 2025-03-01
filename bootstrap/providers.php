@@ -9,4 +9,5 @@ return [
     OwenIt\Auditing\AuditingServiceProvider::class,
     Yajra\DataTables\DataTablesServiceProvider::class,
     Yajra\DataTables\FractalServiceProvider::class,
+    App\Providers\TenancyServiceProvider::class,
 ];

@@ -7,8 +7,8 @@
 </head>
 <body>
     <h1>Hello,</h1>
-    <p>Your OTP code for resetting your password is <strong>{{ $otp }}</strong>.</p>
-    <p>This code will expire at <strong>{{ $expires_at }}</strong>.</p>
-    <p>If you did not request a password reset, please ignore this email.</p>
+    <p>Your OTP code for login into your account is <strong>{{ $otp ?? 'NA' }}</strong>.</p>
+    <p>This code will expire at <strong>{{ $expires_at ?? 'NA' }}</strong>.</p>
+    <p>If you did not request otp, please ignore this email.</p>
 </body>
 </html>

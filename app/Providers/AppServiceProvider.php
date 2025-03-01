@@ -6,6 +6,9 @@ use Illuminate\Support\ServiceProvider;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
+use Laravel\Passport\Passport;
+use Illuminate\Foundation\Http\Kernel;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,6 +25,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Passport::loadKeysFrom(__DIR__ . '/storage/oauth');
+
+        /** @var Kernel $kernel */
+        $kernel = app()->make(Kernel::class);
+
+        $kernel->addToMiddlewarePriorityBefore(
+            SubstituteBindings::class,
+            YourCustomMiddlewareClass::class,
+        );
+
         Scramble::configure()
         ->withDocumentTransformers(function (OpenApi $openApi) {
             $openApi->secure(

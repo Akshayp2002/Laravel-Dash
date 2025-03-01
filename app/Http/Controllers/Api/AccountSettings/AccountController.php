@@ -17,7 +17,7 @@ class AccountController extends Controller
     {
         // Validate the request
         $validator = Validator::make($request->all(), [
-            'profile' => 'required|file|mimes:jpg,jpeg,png,webp|max:2048', // Ensure it's a valid image
+            'profile' => 'required|file|mimes:jpg,jpeg,png,webp|max:2048',   // Ensure it's a valid image
         ]);
 
         // Return validation errors if the request is invalid
@@ -27,7 +27,7 @@ class AccountController extends Controller
 
         // Get the authenticated user
         $user = Auth::user();
-        // Get the uploaded file
+          // Get the uploaded file
         $file = $request->file('profile');
 
         // Upload the new profile picture
@@ -42,7 +42,7 @@ class AccountController extends Controller
             $user->save();
 
             return response()->json([
-                'message' => 'Profile picture updated successfully!',
+                'message'            => 'Profile picture updated successfully!',
                 'profile_photo_path' => Storage::disk('s3')->url($filePath),
             ]);
         }
@@ -57,24 +57,18 @@ class AccountController extends Controller
 
         $validator = Validator::make($request->all(), [
             'current_password' => 'required',
-            'new_password' => 'required|string|min:8|confirmed',
+            'new_password'     => 'required|string|min:8|confirmed',
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'data' => [],
-                'message' => $validator->errors()
-            ], 400);
+            return response()->json(['message' => $validator->errors()], 400);
         }
 
         $user = auth()->user();
 
         // Check if current password matches
         if (!Hash::check($request->current_password, $user->password)) {
-            return response()->json([
-                'data' => [],
-                'message' => 'Current password is incorrect'
-            ], 400);
+            return response()->json(['message' => 'Current password is incorrect'], 400);
         }
 
         // Update the password
@@ -82,8 +76,7 @@ class AccountController extends Controller
         $user->save();
 
         return response()->json([
-            'data' => [],
             'message' => 'Password changed successfully'
-        ]);
+        ], 200);
     }
 }
