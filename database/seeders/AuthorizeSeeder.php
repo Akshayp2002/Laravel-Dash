@@ -19,21 +19,21 @@ class AuthorizeSeeder extends Seeder
          *                           ROLE HAS PERMISSION
          *========================================================================**/
 
-        $role = Role::where('name', DefaultRoleEnum::Administrator)->where('guard_name', 'web')->first();
+        $role = Role::where('name', DefaultRoleEnum::Administrator)->where('guard_name', 'api')->first();
         $role->syncPermissions(Permission::fetchAllStaticPermissionKeysWithoutGroup());
 
         /**========================================================================
          *                           USER HAS ROLE
          *========================================================================**/
 
-            $administrator = User::where('email', 'administrator@rugr.com')->first();
-            $developer     = User::where('email', 'developer@rugr.com')->first();
+            $administrator = User::where('email', 'admin@rugr.com')->first();
+            $developer     = User::where('email', 'dev@rugr.com')->first();
             $guest         = User::where('email', 'guest@rugr.com')->first();
             $user          = User::where('email', 'user@rugr.com')->first();
 
             $administrator->syncRoles([DefaultRoleEnum::Administrator]);
             $developer->syncRoles([DefaultRoleEnum::Administrator]);
-            $guest->syncRoles([DefaultRoleEnum::Guest]);    
+            $guest->syncRoles([DefaultRoleEnum::Guest]);
             $user->syncRoles([DefaultRoleEnum::Guest]);
 
 

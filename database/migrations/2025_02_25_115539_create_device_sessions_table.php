@@ -18,6 +18,10 @@ return new class extends Migration
             $table->string('app_name');
             $table->string('os');
             $table->string('ip_address');
+            $table->text('access_token')->nullable();
+            $table->string('latitude')->nullable();
+            $table->string('longitude')->nullable();
+            $table->string('location')->nullable();
             $table->timestamp('last_active_at');
             $table->timestamps();
         });

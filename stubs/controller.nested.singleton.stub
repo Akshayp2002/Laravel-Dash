@@ -9,6 +9,12 @@ use {{ namespacedParentModel }};
 
 class {{ class }} extends Controller
 {
+
+    public function __construct(ExampleService $exampleService)
+    {
+        $this->exampleService = $exampleService;
+    }
+
     /**
      * Show the form for creating the new resource.
      */

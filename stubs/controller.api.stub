@@ -7,6 +7,12 @@ use Illuminate\Http\Request;
 
 class {{ class }} extends Controller
 {
+
+    public function __construct(ExampleService $exampleService)
+    {
+        $this->exampleService = $exampleService;
+    }
+
     /**
      * Display a listing of the resource.
      */

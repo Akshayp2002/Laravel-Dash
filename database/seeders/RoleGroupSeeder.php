@@ -17,28 +17,28 @@ class RoleGroupSeeder extends Seeder
             [
                 'name'       => 'group-a',
                 'label'      => 'Group A',
-                'guard_name' => 'web',
+                'guard_name' => 'api',
                 'created_at' => now(),
                 'updated_at' => now()
             ],
             [
                 'name'       => 'group-b',
                 'label'      => 'Group B',
-                'guard_name' => 'web',
+                'guard_name' => 'api',
                 'created_at' => now(),
                 'updated_at' => now()
             ],
             [
                 'name'       => 'group-c',
                 'label'      => 'Group C',
-                'guard_name' => 'web',
+                'guard_name' => 'api',
                 'created_at' => now(),
                 'updated_at' => now()
             ],
             [
                 'name'       => 'group-d',
                 'label'      => 'Group D',
-                'guard_name' => 'web',
+                'guard_name' => 'api',
                 'created_at' => now(),
                 'updated_at' => now()
             ],

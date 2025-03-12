@@ -26,6 +26,7 @@ class DeviceSession extends Model implements Auditable
         'access_token',
         'latitude',
         'longitude',
+        'location',
         'last_active_at'
     ];
 }

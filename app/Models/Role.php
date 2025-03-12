@@ -10,7 +10,7 @@ use Spatie\Permission\Models\Role as SpatieRole;
 
 class Role extends SpatieRole implements Auditable
 {
-    use PowerJoins, HasUlids;
+    use PowerJoins;
     use \OwenIt\Auditing\Auditable;
     //
     /**

@@ -17,7 +17,7 @@ class RoleSeeder extends Seeder
         $roles = array_map(fn($enum) =>
         [
             'name'       => $enum->value,
-            'guard_name' => 'web',
+            'guard_name' => 'api',
             'created_at' => now(),
             'updated_at' => now()
         ], DefaultRoleEnum::cases());

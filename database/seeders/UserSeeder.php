@@ -13,10 +13,10 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        if (!User::where('email', 'administrator@rugr.com')->exists()) {
+        if (!User::where('email', 'admin@rugr.com')->exists()) {
             User::factory()->withPersonalTeam()->create([
                 'name'     => 'Administrator',
-                'email'    => 'administrator@rugr.com',
+                'email'    => 'admin@rugr.com',
                 'password' => Hash::make('Admin@123'),
             ]);
         }
@@ -28,10 +28,10 @@ class UserSeeder extends Seeder
             ]);
         }
 
-        if (!User::where('email', 'developer@rugr.com')->exists()) {
+        if (!User::where('email', 'dev@rugr.com')->exists()) {
             User::factory()->withPersonalTeam()->create([
                 'name'     => 'Developer',
-                'email'    => 'developer@rugr.com',
+                'email'    => 'dev@rugr.com',
                 'password' => Hash::make('Dev@123'),
             ]);
         }

@@ -73,7 +73,15 @@ class User extends Authenticatable  implements Auditable
             'password'          => 'hashed',
         ];
     }
-public function twoFactorStatus()
+
+
+    protected function getDefaultGuardName(): string
+    {
+        return 'api';
+    }
+
+
+    public function twoFactorStatus()
 {
     return $this->hasOne(TwoFactorStatus::class, 'user_id');
 }

@@ -23,6 +23,8 @@ class TwoFactorStatus extends Model implements Auditable
         'qr_code_status',
         'email_otp_status',
         'mobile_otp_status',
+        'screen_lock_status',
+        'otp',
     ];
 
 

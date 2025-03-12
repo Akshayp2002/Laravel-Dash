@@ -8,7 +8,7 @@ use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\Http;
 
-class GoogleController extends Controller
+class SocialLoginController extends Controller
 {
     public function redirectToGoogle()
     {

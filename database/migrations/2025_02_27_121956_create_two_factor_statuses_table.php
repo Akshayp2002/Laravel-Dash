@@ -18,6 +18,8 @@ return new class extends Migration
             $table->boolean('qr_code_status')->default(false);
             $table->boolean('email_otp_status')->default(false);
             $table->boolean('mobile_otp_status')->default(false);
+            $table->boolean('screen_lock_status')->default(false);
+            $table->string('otp')->nullable();
             $table->timestamps();
         });
     }

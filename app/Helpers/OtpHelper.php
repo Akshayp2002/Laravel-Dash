@@ -50,7 +50,7 @@ class OtpHelper
             ->first();
 
         if ($otpRecord) {
-
+            $otpRecord->delete();
             return true;
         }
 

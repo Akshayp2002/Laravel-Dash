@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Api\Auth;
 
+use App\Helpers\OtpHelper;
 use App\Helpers\RateLimiterHelper;
 use App\Http\Controllers\Controller;
+use App\Mail\EmailOtpVerifyMail;
 use App\Models\Otp;
 use App\Models\TwoFactorStatus;
 use App\Models\User;
@@ -15,6 +17,7 @@ use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class TwoFactorAuthController extends Controller
@@ -42,8 +45,17 @@ class TwoFactorAuthController extends Controller
 
     public function toggle2FA(Request $request)
     {
+        $request->validate([
+            'password' => 'required|string',
+        ]);
+        // Get the authenticated user from token
+        $user = Auth::user();
+        // Verify password before enabling 2FA
+        if (!Hash::check($request->password, $user->password)) {
+            return response()->json(['error' => 'Incorrect password.'], 403);
+        }
         // Get the authenticated user
-        $status = TwoFactorStatus::firstOrNew(['user_id' => Auth::user()->id]);
+        $status = TwoFactorStatus::firstOrNew(['user_id' =>  $user->id]);
 
         // Check if the current route is for enabling or disabling 2FA
         $enable = $request->route()->getName() === '2fa.enable';
@@ -304,21 +316,92 @@ class TwoFactorAuthController extends Controller
         ]);
     }
 
+    // Disable 2FA
+    public function disableAuthenticator(Request $request)
+    {
+        $request->validate([
+            'password' => 'required|string',
+        ]);
+        // Get the authenticated user from token
+        $user = Auth::user();
+        //Verify password before disabling 2FA
+        if (!Hash::check($request->password, $user->password)) {
+            return response()->json(['error' => 'Incorrect password.'], 403);
+        }
+        // Change the status to enabled
+        $status = TwoFactorStatus::firstOrNew(['user_id' => $user->id]);
+        $status->qr_code_status = false;
+        $status->save();
+        // Disable 2FA
+        $user->forceFill([
+            'two_factor_secret'         => null,
+            'two_factor_recovery_codes' => null,
+            'two_factor_confirmed_at'   => null,
+        ])->save();
+
+        return response()->json(['message' => '2FA has been successfully disabled.']);
+    }
+
     // enable/disable mfa email otp
     public function toggleEmailOtp(Request $request)
     {
-        $status = TwoFactorStatus::firstOrNew(['user_id' => Auth::user()->id]);
+        $user   = Auth::user();
+        $status = TwoFactorStatus::firstOrNew(['user_id' =>  $user->id]);
         $enable = $request->route()->getName() === 'emailOtp.enable';
 
-        // Set the emailotp status based on the route (true for enabling, false for disabling)
-        $status->email_otp_status = $enable;
+        if ($enable) {
+            if ($status->email_otp_status == true) {
+                return response()->json([
+                    'status'  => true,
+                    'message' => 'Email OTP is Already Enabled.',
+                ], 200);
+            }
+            // Generate a random OTP
+            $result = OtpHelper::generateOtp($user->id);
+
+            // Send OTP via email
+            Mail::to($user->email)->send(new EmailOtpVerifyMail($result));
+
+            return response()->json([
+                'status'     => true,
+                'message'    => 'OTP has been sent to your email. Please verify to enable email OTP.',
+                'user_token' => $result['user_token']
+            ], 200);
+        } else {
+            // Directly disable email OTP
+            $status->email_otp_status = false;
+            $status->save();
+
+            return response()->json([
+                'status'  => true,
+                'message' => 'Email OTP is Disabled.',
+            ], 200);
+        }
+    }
+    // enable/disable mfa email otp
+    public function toggleEmailOtpVerify(Request $request)
+    {
+        $request->validate([
+            'user_token' => 'required',
+            'otp'        => 'required|numeric',
+        ]);
+        $user = Auth::user();
+        $isValid = OtpHelper::verifyOtpUser($request->user_token, $request->otp);
+
+        if (!$isValid) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Invalid or expired OTP.',
+            ], 400);
+        }
+        // Enable email OTP
+        $status = TwoFactorStatus::firstOrNew(['user_id' => $user->id]);
+        $status->email_otp_status = true;
         $status->save();
 
         return response()->json([
             'status'  => true,
-            'message' => $enable ? 'emailOtp is Enabled.' : 'emailOtp is Disabled.'
+            'message' => 'Email OTP is successfully enabled.',
         ], 200);
     }
-
-
 }
